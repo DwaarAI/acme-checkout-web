@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Acme storefront on AWS Lambda (Dwaar demo): the container image behind a function URL.
+  DEMO: the function URL has no authentication and open CORS, on purpose, for exposure and posture
+  scanners. It serves a static shop page and a read-only product list.
+Parameters:
+  ImageUri:
+    Type: String
+    Description: The image to run, by digest (<account>.dkr.ecr.<region>.amazonaws.com/acme-checkout-web@sha256:...).
+  ApiUrl:
+    Type: String
+    Default: ""
+    Description: The checkout API base URL (http://<ip>:8080), empty until the API runs.
+Resources:
+  FunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: acme-checkout-web-function
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: acme-checkout-web
+      PackageType: Image
+      Code: { ImageUri: !Ref ImageUri }
+      Architectures: [arm64]
+      MemorySize: 256
+      Timeout: 10
+      Role: !GetAtt FunctionRole.Arn
+      Environment:
+        Variables:
+          API_URL: !Ref ApiUrl
+          ACME_ENV: demo
+  FunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !Ref Function
+      AuthType: NONE
+      Cors: { AllowOrigins: ["*"], AllowMethods: ["*"], AllowHeaders: ["*"] }
+  PublicUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+  PublicInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: lambda:InvokeFunction
+      Principal: "*"
+      InvokedViaFunctionUrl: true
+Outputs:
+  FunctionName: { Value: !Ref Function }
+  FunctionUrl: { Value: !GetAtt FunctionUrl.FunctionUrl }

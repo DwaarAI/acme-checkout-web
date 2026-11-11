@@ -1,0 +1,5 @@
+.git
+.github
+deploy
+node_modules
+*.md

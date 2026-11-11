@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acme Outdoor</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f6f5f2; color: #1d1d1b; }
+  header { padding: 20px 32px; background: #1d3b2a; color: #fff; display: flex; justify-content: space-between; }
+  main { max-width: 860px; margin: 32px auto; padding: 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 2px #0001; }
+  .price { font-weight: 600; margin-top: 8px; }
+  footer { text-align: center; font-size: 12px; color: #777; margin: 40px 0; }
+</style></head>
+<body>
+<header><strong>Acme Outdoor</strong><span>Checkout demo</span></header>
+<main id="shop"><p>Loading the catalogue…</p></main>
+<footer>Acme is fictional. This storefront is part of a Dwaar security demo.</footer>
+<script>
+fetch("/api/products").then(r => r.json()).then(items => {
+  const shop = document.getElementById("shop");
+  shop.innerHTML = items.length ? "" : "<p>The catalogue API is not connected.</p>";
+  for (const p of items) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<div>${p.name}</div><div class="price">€${p.price.toFixed(2)}</div>`;
+    shop.appendChild(card);
+  }
+});
+</script>
+</body></html>
